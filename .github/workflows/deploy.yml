@@ -20,12 +20,25 @@ jobs:
     runs-on: self-hosted
 
     env:
-      REGISTRY: 192.168.88.199:6800
+      REGISTRY: registry.nativesilicon.co.za
+      REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
       IMAGE_NAME: resumex
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Log in to registry
+        # The runner's ~/.docker/config.json sets credsStore=pass, which is not initialised on this
+        # headless host, so `docker login` fails to save credentials. Use a per-job config dir
+        # without a credential helper; seed an auth entry so the CLI keeps credentials in the file.
+        run: |
+          export DOCKER_CONFIG="$RUNNER_TEMP/docker-config"
+          mkdir -p "$DOCKER_CONFIG"
+          echo '{"auths":{"'"$REGISTRY"'":{}}}' > "$DOCKER_CONFIG/config.json"
+          echo "DOCKER_CONFIG=$DOCKER_CONFIG" >> "$GITHUB_ENV"
+          echo "$REGISTRY_PASSWORD" | docker login "$REGISTRY" --username "$REGISTRY_USER" --password-stdin
 
       - name: Read version from package.json
         id: version
