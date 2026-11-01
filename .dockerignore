@@ -4,5 +4,5 @@ node_modules
 .github
 .env
 .env*.local
-supabase
+supabase/seed.sql
 README.md
